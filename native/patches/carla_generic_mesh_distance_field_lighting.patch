@@ -1,0 +1,23 @@
+--- a/Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Actor/StaticMeshFactory.cpp
++++ b/Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Actor/StaticMeshFactory.cpp
+@@ -33,6 +33,10 @@
+       TEXT("sensor_trace"),
+       EActorAttributeType::Bool,
+       {"false"}, false});
++  StaticMeshDefinition.Variations.Emplace(FActorVariation{
++      TEXT("distance_field_lighting"),
++      EActorAttributeType::Bool,
++      {"true"}, false});
+   return { StaticMeshDefinition };
+ }
+ 
+@@ -70,6 +74,9 @@
+           ActorDescription.Variations["mesh_path"], "");
+       
+       UStaticMesh *Mesh = LoadObject<UStaticMesh>(nullptr, *MeshPath);
++      // Optional per-mesh distance-field lighting; ordinary meshes keep the default.
++      StaticMeshComponent->bAffectDistanceFieldLighting = ABFL::RetrieveActorAttributeToBool(
++          "distance_field_lighting", ActorDescription.Variations, true);
+       StaticMeshComponent->SetMobility(EComponentMobility::Movable);
+       if (!StaticMeshComponent->SetStaticMesh(Mesh))
+         UE_LOG(LogCarla, Warning, TEXT("Failed to set the mesh"));

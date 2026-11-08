@@ -1,0 +1,2 @@
+# Offline integration tests and source-area geometry fixtures.
+numpy==1.26.4

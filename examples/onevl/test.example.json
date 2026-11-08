@@ -1,0 +1,18 @@
+{
+  "output": "/path/to/new-paired-test-output",
+  "cases": "/path/to/source-cases.local.json",
+  "resources": {"gpu": 0, "cpus": "0-3", "port": 25040, "threads": 2},
+  "environment": {},
+  "prepare": {
+    "name": "source_pair_capture",
+    "command": ["/path/to/map-env/bin/python", "/path/to/user-adapters/paired_test.py"],
+    "cwd": "/path/to/user-adapters",
+    "config": "/path/to/pair-preparation.local.json"
+  },
+  "predictor": {
+    "name": "OneVL",
+    "command": ["/path/to/onevl-env/bin/python", "/path/to/user-adapters/paired_test.py"],
+    "cwd": "/path/to/user-adapters",
+    "config": "/path/to/onevl-model.local.json"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "model_id": "LEAD-your-installed-release",
+  "source_root": "/path/to/installed-lead",
+  "checkpoint_paths": ["/path/to/lead-checkpoint"],
+  "sensor_config": "/path/to/release-matched-sensors.json",
+  "navigation_config": "/path/to/release-matched-navigation.json",
+  "controller_config": "/path/to/release-matched-controller.json",
+  "learned_request_ids": [0],
+  "background_controller": "BasicAgent",
+  "fixed_delta_seconds": 0.05,
+  "seed": 0
+}

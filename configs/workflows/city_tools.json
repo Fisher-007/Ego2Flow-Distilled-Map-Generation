@@ -1,0 +1,3117 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "index_city",
+      "stages": [
+        "source_selection"
+      ],
+      "description": "Index actual AV2 maps and ego poses for one city and split.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.index_city_network",
+        "environment": "map"
+      },
+      "inputs": [
+        "AV2 data root",
+        "city code",
+        "train/val/test split"
+      ],
+      "outputs": [
+        "catalog.json",
+        "all_cities.json",
+        "cached vector maps and poses"
+      ]
+    },
+    {
+      "id": "review_city_coverage",
+      "stages": [
+        "source_selection"
+      ],
+      "description": "Measure available source footprints, lane overlap and ego coverage.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.review_city_coverage",
+        "environment": "map"
+      },
+      "inputs": [
+        "merged AV2 catalog",
+        "AV2 data root"
+      ],
+      "outputs": [
+        "coverage report and figures"
+      ]
+    },
+    {
+      "id": "propose_areas",
+      "stages": [
+        "source_selection"
+      ],
+      "description": "Propose distinct observed junction regions for Agent selection.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.propose_city_areas",
+        "environment": "map"
+      },
+      "inputs": [
+        "merged AV2 catalog",
+        "AV2 data root"
+      ],
+      "outputs": [
+        "area_candidates.json"
+      ]
+    },
+    {
+      "id": "fetch_city_evidence",
+      "stages": [
+        "source_selection",
+        "information"
+      ],
+      "description": "Acquire sparse source cameras, matched LiDAR, calibrations and annotations.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.fetch_city_evidence",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "optional source log subset"
+      ],
+      "outputs": [
+        "per-log object downloads",
+        "download summary"
+      ]
+    },
+    {
+      "id": "plot_city_evidence",
+      "stages": [
+        "source_selection",
+        "information"
+      ],
+      "description": "Produce source images and Area view index for Agent review.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.plot_city_evidence",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root"
+      ],
+      "outputs": [
+        "views.json",
+        "source evidence images"
+      ]
+    },
+    {
+      "id": "fetch_osm",
+      "stages": [
+        "coarse"
+      ],
+      "description": "Fetch and merge OSM tiles covering the configured city rectangle.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.fetch_osm_region",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config or prepared request file",
+        "data root"
+      ],
+      "outputs": [
+        "configured OSM source file",
+        "request/source records"
+      ]
+    },
+    {
+      "id": "prepare_terrain",
+      "stages": [
+        "coarse"
+      ],
+      "description": "Acquire a spatially selected USGS bare-earth DEM.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.prepare_terrain",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config or request file",
+        "data root",
+        "reviewed raster ID or name"
+      ],
+      "outputs": [
+        "configured DEM",
+        "terrain acquisition metadata"
+      ]
+    },
+    {
+      "id": "build_coarse",
+      "stages": [
+        "coarse"
+      ],
+      "description": "Build OSM/SUMO roads, terrain and source building masses.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.build_coarse",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "netconvert",
+        "SUMO home"
+      ],
+      "outputs": [
+        "scene.json",
+        "OSM/SUMO road and route diagnostics"
+      ]
+    },
+    {
+      "id": "review_coarse",
+      "stages": [
+        "coarse"
+      ],
+      "description": "Check the constructed coarse scene with its existing offline checks.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.check_coarse",
+        "environment": "map"
+      },
+      "inputs": [
+        "coarse scene",
+        "check output directory"
+      ],
+      "outputs": [
+        "coarse geometry and route checks"
+      ]
+    },
+    {
+      "id": "assemble_sources",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Assemble explicitly reviewed AV2 source maps while retaining source identities.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.assemble_city_sources",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "optional source/geometry review",
+        "selected logs"
+      ],
+      "outputs": [
+        "log_map_archive_*____CITY_city_assembled.json",
+        "assembly .review.json"
+      ]
+    },
+    {
+      "id": "diagnose_registration",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Measure overlapping source road discrepancies.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.diagnose_city_registration",
+        "environment": "map"
+      },
+      "inputs": [
+        "inspect CLI for source and configuration inputs"
+      ],
+      "outputs": [
+        "registration measurement report"
+      ]
+    },
+    {
+      "id": "propose_registration",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Prepare source-alignment candidates for Agent judgment.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.propose_city_source_alignment",
+        "environment": "map"
+      },
+      "inputs": [
+        "inspect CLI for source and configuration inputs"
+      ],
+      "outputs": [
+        "candidate registrations and overlap evidence"
+      ]
+    },
+    {
+      "id": "fuse_sources",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Fuse the reviewed AV2 assembly with the complete coarse city scene.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.fuse_city_sources",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "coarse scene",
+        "assembly path relative to data root"
+      ],
+      "outputs": [
+        "scene.json",
+        "fusion_review.json"
+      ]
+    },
+    {
+      "id": "repair_coarse_geometry",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Correct source-related coarse geometry with an explicit repair report.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.repair_coarse_geometry",
+        "environment": "map"
+      },
+      "inputs": [
+        "coarse scene"
+      ],
+      "outputs": [
+        "revised scene and geometry report"
+      ]
+    },
+    {
+      "id": "align_heights",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Fit coarse road elevations to actual fine road constraints.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.align_city_road_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "coarse scene",
+        "optional fine scene"
+      ],
+      "outputs": [
+        "scene.json",
+        "height_review.json"
+      ]
+    },
+    {
+      "id": "smooth_profiles",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Revise coarse longitudinal profiles with existing height evidence.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.smooth_city_road_profiles",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "height review"
+      ],
+      "outputs": [
+        "revised scene and profile report"
+      ]
+    },
+    {
+      "id": "restore_access",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Restore source-backed coarse/fine approaches and report pending ports.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.restore_city_access",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused scene",
+        "optional reviewed candidates"
+      ],
+      "outputs": [
+        "scene.json",
+        "access candidate and repair reports"
+      ]
+    },
+    {
+      "id": "review_access",
+      "stages": [
+        "fusion",
+        "static_review"
+      ],
+      "description": "Measure unresolved city access geometry.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_access",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused scene"
+      ],
+      "outputs": [
+        "access review JSON"
+      ]
+    },
+    {
+      "id": "review_reachability",
+      "stages": [
+        "fusion",
+        "static_review"
+      ],
+      "description": "Measure passenger graph coverage and Area reachability.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_reachability",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene"
+      ],
+      "outputs": [
+        "reachability JSON"
+      ]
+    },
+    {
+      "id": "prepare_controls",
+      "stages": [
+        "information"
+      ],
+      "description": "Retrieve source camera evidence for control objects.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.prepare_city_controls",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "city config",
+        "data root"
+      ],
+      "outputs": [
+        "per-log control evidence",
+        "summary.json"
+      ]
+    },
+    {
+      "id": "prepare_graph",
+      "stages": [
+        "information"
+      ],
+      "description": "Attach actual Agent visual decisions and fusion/compiler evidence to the information graph.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.agent.prepare_city_graph",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "Agent visual review",
+        "optional junction/access/geometry/control/continuation reviews"
+      ],
+      "outputs": [
+        "graph.json",
+        "conditions.json",
+        "summary.json"
+      ]
+    },
+    {
+      "id": "information_graph",
+      "stages": [
+        "information",
+        "structure",
+        "appearance",
+        "static_review",
+        "dynamic_review"
+      ],
+      "description": "Inspect, revise, compile and record runtime feedback on the evidence graph.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.agent.information_graph",
+        "environment": "map"
+      },
+      "inputs": [
+        "action",
+        "graph",
+        "task",
+        "scene/revision/run as required by action"
+      ],
+      "outputs": [
+        "revised graph",
+        "task conditions",
+        "inspection or feedback JSON"
+      ]
+    },
+    {
+      "id": "bind_control_approaches",
+      "stages": [
+        "information"
+      ],
+      "description": "Apply reviewed control-to-source approach relations.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.agent.bind_city_control_approaches",
+        "environment": "map"
+      },
+      "inputs": [
+        "graph",
+        "control evidence",
+        "Agent selection"
+      ],
+      "outputs": [
+        "updated graph and relation report"
+      ]
+    },
+    {
+      "id": "prepare_signal_controls",
+      "stages": [
+        "information",
+        "compile"
+      ],
+      "description": "Compile reviewed controller groups onto existing road metadata.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.agent.prepare_signal_controls",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "metadata",
+        "SUMO network",
+        "graph",
+        "control review",
+        "netconvert"
+      ],
+      "outputs": [
+        "controlled navigation and signal conditions"
+      ]
+    },
+    {
+      "id": "prepare_corridor",
+      "stages": [
+        "structure"
+      ],
+      "description": "Expose one problematic source transition and its inferred approach for generation.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_access_corridor",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "graph",
+        "seam ID",
+        "Agent reason"
+      ],
+      "outputs": [
+        "scene.json",
+        "graph.json",
+        "decision.json",
+        "corridor.json"
+      ]
+    },
+    {
+      "id": "generate_corridor",
+      "stages": [
+        "structure"
+      ],
+      "description": "Run actual Scenario Dreamer sampling, repair sampling and constrained assembly.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.assets.generate_feedback_road",
+        "environment": "scenario_dreamer"
+      },
+      "inputs": [
+        "sample/repair/assemble action",
+        "decision",
+        "Scenario Dreamer source",
+        "information graph/task"
+      ],
+      "outputs": [
+        "generation candidate.json",
+        "raw_review_input.json",
+        "sampling/repair records"
+      ]
+    },
+    {
+      "id": "constrain_corridor",
+      "stages": [
+        "structure"
+      ],
+      "description": "Apply stated steering bounds to a generated corridor interior.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.constrain_generated_corridor",
+        "environment": "map"
+      },
+      "inputs": [
+        "local scene",
+        "generated candidate",
+        "maximum curvature",
+        "Agent reason"
+      ],
+      "outputs": [
+        "candidate.json",
+        "constraint report"
+      ]
+    },
+    {
+      "id": "apply_corridor",
+      "stages": [
+        "structure"
+      ],
+      "description": "Return the accepted corridor candidate to its original source identities.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.apply_access_corridor",
+        "environment": "map"
+      },
+      "inputs": [
+        "corridor manifest",
+        "accepted candidate"
+      ],
+      "outputs": [
+        "updated full-scene candidate and application report"
+      ]
+    },
+    {
+      "id": "group_access_repairs",
+      "stages": [
+        "structure"
+      ],
+      "description": "Group coupled inferred intervals near measured access failures.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.group_access_repair_regions",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "geometry review",
+        "margin"
+      ],
+      "outputs": [
+        "grouped repair region conditions"
+      ]
+    },
+    {
+      "id": "generate_access_group",
+      "stages": [
+        "structure"
+      ],
+      "description": "Condition official Scenario Dreamer on an Agent-reviewed group of inferred paths.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.generation.generate_access_group",
+        "environment": "scenario_dreamer"
+      },
+      "inputs": [
+        "condition JSON or batch root",
+        "Scenario Dreamer source",
+        "seed/start-t"
+      ],
+      "outputs": [
+        "model candidates and generation reports"
+      ]
+    },
+    {
+      "id": "prepare_materials",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Add selected AV2 material families to the graph and prepare Cosmos conditions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_materials",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "graph",
+        "Agent material family selection"
+      ],
+      "outputs": [
+        "graph.json",
+        "conditions.json",
+        "materials/*/case.json"
+      ]
+    },
+    {
+      "id": "cosmos_transfer",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Run actual Cosmos 3 transfer from reviewed controls and graph requirements.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.appearance.cosmos3_transfer",
+        "environment": "cosmos"
+      },
+      "inputs": [
+        "model",
+        "case JSON",
+        "guardrail model root",
+        "optional information conditions"
+      ],
+      "outputs": [
+        "conditioned_case.json",
+        "generated_*.png",
+        "result.json"
+      ]
+    },
+    {
+      "id": "materialize_materials",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Convert approved generated wall proposals into periodic native material tiles.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.assets.materialize_frontage_materials",
+        "environment": "map"
+      },
+      "inputs": [
+        "root containing per-family case.json and generated/generated_000.png"
+      ],
+      "outputs": [
+        "per-family basecolor.png",
+        "materials.json"
+      ]
+    },
+    {
+      "id": "prepare_architecture",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Attach reviewed architectural families to source-supported city footprints.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_architecture",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "graph",
+        "selection",
+        "visual review"
+      ],
+      "outputs": [
+        "frontage_plan.json",
+        "graph.json",
+        "conditions.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "export_architecture",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Build existing source-conditioned architectural assets from the accepted frontage plan.",
+      "entrypoint": {
+        "kind": "blender",
+        "target": "scripts/assets/export_frontage_architecture.py",
+        "environment": "blender"
+      },
+      "inputs": [
+        "frontage plan"
+      ],
+      "outputs": [
+        "frontage.fbx",
+        "architecture.json"
+      ]
+    },
+    {
+      "id": "import_architecture",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Install selected architectural assets and materials in the target native map.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.assets.import_frontage_architecture",
+        "environment": "map"
+      },
+      "inputs": [
+        "asset root",
+        "materials",
+        "map",
+        "output"
+      ],
+      "outputs": [
+        "native installation report"
+      ]
+    },
+    {
+      "id": "prepare_canopy",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Extract vegetation evidence from selected actual AV2 LiDAR/camera views.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_canopy",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "visual review",
+        "data root"
+      ],
+      "outputs": [
+        "per-log canopy evidence",
+        "review.json"
+      ]
+    },
+    {
+      "id": "prepare_landcover",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Prepare observed/inferred land-cover and pavement extents.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_landcover",
+        "environment": "map"
+      },
+      "inputs": [
+        "inspect CLI: current scene and Agent-reviewed evidence"
+      ],
+      "outputs": [
+        "landcover and pavement extension files",
+        "review"
+      ]
+    },
+    {
+      "id": "prepare_neighborhood_streetscape",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Extend reviewed AV2 neighborhood vegetation and ground context onto existing city support.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_neighborhood_streetscape",
+        "environment": "map"
+      },
+      "inputs": [
+        "--scene",
+        "--native-snapshot",
+        "--profiles with area_style_profiles and streetscape conditions",
+        "--osm",
+        "--output"
+      ],
+      "outputs": [
+        "canopy.json",
+        "ground_mask.png and ground_mask.json",
+        "parking_mask.png and parking.json",
+        "source_gap_conditions.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "manage_inferred_context",
+      "stages": [
+        "compile",
+        "static_review",
+        "dynamic_review"
+      ],
+      "description": "Spawn, inspect, release and remove explicitly inferred native parked vehicles.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.manage_inferred_context",
+        "environment": "map"
+      },
+      "inputs": [
+        "--registry with map, role_name_prefix and vehicles",
+        "--port",
+        "--action spawn/status/release/remove",
+        "--ids for selected release",
+        "--output"
+      ],
+      "outputs": [
+        "Native actor, support, control or removal records"
+      ]
+    },
+    {
+      "id": "prepare_actor_appearance",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Extract source actor appearance using calibrated city observations.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_actor_appearance",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "city config",
+        "data root",
+        "selected logs/cameras"
+      ],
+      "outputs": [
+        "per-log actor appearance records"
+      ]
+    },
+    {
+      "id": "build_roads",
+      "stages": [
+        "compile"
+      ],
+      "description": "Compile initial source-lane OpenDRIVE and shared physical road geometry.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.build_roads",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "workers",
+        "CARLA source root"
+      ],
+      "outputs": [
+        "roads.xodr",
+        "road_lane_ids.json",
+        "road_meshes.json and compilation diagnostics"
+      ]
+    },
+    {
+      "id": "review_corridors",
+      "stages": [
+        "compile"
+      ],
+      "description": "Identify continuous source lane chains for native parallel-lane sections.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_native_corridors",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads",
+        "optional supplied lateral report"
+      ],
+      "outputs": [
+        "corridor candidate report"
+      ]
+    },
+    {
+      "id": "prepare_coarse_groups",
+      "stages": [
+        "compile"
+      ],
+      "description": "Prepare source-supported OSM parallel lane groups.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_coarse_lane_groups",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "ports mapping",
+        "workers"
+      ],
+      "outputs": [
+        "scene.json",
+        "groups.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "prepare_native_sections",
+      "stages": [
+        "compile"
+      ],
+      "description": "Compile and inspect native lane-section candidates.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_native_sections",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads directory",
+        "groups JSON",
+        "workers"
+      ],
+      "outputs": [
+        "sections/*",
+        "review.json",
+        "passed_groups.json"
+      ]
+    },
+    {
+      "id": "pack_lane_groups",
+      "stages": [
+        "compile"
+      ],
+      "description": "Pack accepted AV2/coarse lane groups into actual OpenDRIVE roads.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.pack_lane_groups",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "original roads",
+        "group JSON",
+        "optional section cache"
+      ],
+      "outputs": [
+        "roads.xodr",
+        "road_lane_ids.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "build_packed_surfaces",
+      "stages": [
+        "compile"
+      ],
+      "description": "Sample physical surfaces with the packed road/lane identities.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.build_packed_surfaces",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "packed roads directory",
+        "workers"
+      ],
+      "outputs": [
+        "physical surface bundle and sampling report"
+      ]
+    },
+    {
+      "id": "prepare_ground",
+      "stages": [
+        "compile"
+      ],
+      "description": "Build ground support and foundations from graph-selected height/layer conditions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_ground",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "road_meshes.json",
+        "conditions",
+        "optional data root"
+      ],
+      "outputs": [
+        "scene.json",
+        "road_meshes.json",
+        "terrain_mesh.json",
+        "support_review.json"
+      ]
+    },
+    {
+      "id": "build_assets",
+      "stages": [
+        "compile"
+      ],
+      "description": "Export road, terrain and building geometry with Blender, optionally in spatial tiles.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.build_assets",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "road_meshes.json",
+        "Blender executable",
+        "tile settings",
+        "optional coordinate conditions"
+      ],
+      "outputs": [
+        "map_assets.blend",
+        "map_assets.fbx",
+        "assets.json",
+        "terrain_mesh.json"
+      ]
+    },
+    {
+      "id": "import_map",
+      "stages": [
+        "compile"
+      ],
+      "description": "Import FBX/OpenDRIVE and assemble a dedicated CARLA package.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.import_map",
+        "environment": "map"
+      },
+      "inputs": [
+        "FBX files",
+        "roads.xodr",
+        "explicit package/map name",
+        "CARLA/UE roots",
+        "CPU set"
+      ],
+      "outputs": [
+        "map_build.json",
+        "UE logs",
+        "installed map package"
+      ]
+    },
+    {
+      "id": "replace_surfaces",
+      "stages": [
+        "compile"
+      ],
+      "description": "Install a reviewed surface revision in a copied native map.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.replace_surface_assets",
+        "environment": "map"
+      },
+      "inputs": [
+        "assets.json",
+        "source map",
+        "new map name",
+        "output"
+      ],
+      "outputs": [
+        "surface replacement and native asset reports"
+      ]
+    },
+    {
+      "id": "install_navigation",
+      "stages": [
+        "compile"
+      ],
+      "description": "Install reviewed navigation/control changes in a copied map.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.install_navigation",
+        "environment": "map"
+      },
+      "inputs": [
+        "source map",
+        "new name",
+        "inspect CLI for navigation bundle"
+      ],
+      "outputs": [
+        "navigation installation report"
+      ]
+    },
+    {
+      "id": "prewarm",
+      "stages": [
+        "compile"
+      ],
+      "description": "Prepare the current map's UE meshes, shaders and derived data.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.prewarm_carla",
+        "environment": "map"
+      },
+      "inputs": [
+        "one or more map asset paths",
+        "CARLA/UE roots",
+        "CPU set"
+      ],
+      "outputs": [
+        "prewarm logs and result"
+      ]
+    },
+    {
+      "id": "run_carla",
+      "stages": [
+        "static_review",
+        "dynamic_review"
+      ],
+      "description": "Launch the assigned CARLA source-build world.",
+      "entrypoint": {
+        "kind": "shell",
+        "target": "scripts/env/run_carla.sh",
+        "environment": "shell"
+      },
+      "inputs": [
+        "map asset path",
+        "MAP_GPU/CPUSET/RPC_PORT/RUNTIME_DIR",
+        "CARLA/UE paths"
+      ],
+      "outputs": [
+        "live native world",
+        "runtime logs"
+      ]
+    },
+    {
+      "id": "review_lateral",
+      "stages": [
+        "static_review"
+      ],
+      "description": "Check original observed neighbor relations against compiled native lanes.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_native_lateral",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads",
+        "optional original source scene and graph",
+        "Agent reason"
+      ],
+      "outputs": [
+        "lateral report",
+        "optional updated feedback graph"
+      ]
+    },
+    {
+      "id": "review_packed",
+      "stages": [
+        "static_review"
+      ],
+      "description": "Recheck source edges and packed multi-lane representation.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_packed_roads",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "original roads directory",
+        "packed roads directory"
+      ],
+      "outputs": [
+        "updated packed compilation review"
+      ]
+    },
+    {
+      "id": "prepare_view_snapshots",
+      "stages": [
+        "static_review"
+      ],
+      "description": "Align selected source views with causal actor history.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_view_snapshots",
+        "environment": "map"
+      },
+      "inputs": [
+        "views JSON",
+        "histories",
+        "data root"
+      ],
+      "outputs": [
+        "views.json",
+        "histories/<log_id>/<camera>/history.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "render_city_views",
+      "stages": [
+        "static_review"
+      ],
+      "description": "Render actual calibrated native Area views and optional geometry/material buffers.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.render_city_views",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "views.json",
+        "per-log/camera histories directory",
+        "per-log actor appearance directory",
+        "map and port",
+        "optional signal evidence and surfaces"
+      ],
+      "outputs": [
+        "paired native views",
+        "rendering report"
+      ]
+    },
+    {
+      "id": "probe_pavement",
+      "stages": [
+        "static_review"
+      ],
+      "description": "Probe actual patch collision support in the owned native world.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.probe_pavement",
+        "environment": "map"
+      },
+      "inputs": [
+        "roads mesh JSON",
+        "patch report",
+        "expected map",
+        "port"
+      ],
+      "outputs": [
+        "collision height/contact probe report"
+      ]
+    },
+    {
+      "id": "prepare_routes",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Prepare source-legal traversal candidates for every declared Area.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_driving_routes",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "data root"
+      ],
+      "outputs": [
+        "one route JSON per Area",
+        "review.json"
+      ]
+    },
+    {
+      "id": "check_routes",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Check actual OpenDRIVE routes and optional native planner paths.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.check_city_driving_plans",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads",
+        "routes",
+        "native-planner flag"
+      ],
+      "outputs": [
+        "route preparation review"
+      ]
+    },
+    {
+      "id": "prepare_transfer_routes",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Connect Area routes through actual source-permitted successors.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_transfer_routes",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "area routes"
+      ],
+      "outputs": [
+        "transfer route JSON",
+        "review.json"
+      ]
+    },
+    {
+      "id": "drive_city_routes",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Drive prepared routes with BasicAgent and real native vehicle physics.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.drive_city_routes",
+        "environment": "map"
+      },
+      "inputs": [
+        "plans directory",
+        "map",
+        "port",
+        "signals",
+        "time/speed/lookahead",
+        "optional video FFmpeg"
+      ],
+      "outputs": [
+        "route trajectories",
+        "arrival/collision/deviation results",
+        "optional video"
+      ]
+    },
+    {
+      "id": "check_multilane_runtime",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Drive native lane changes or turn cases.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.check_multilane_runtime",
+        "environment": "map"
+      },
+      "inputs": [
+        "compiled roads",
+        "explicit map",
+        "cases",
+        "--imported"
+      ],
+      "outputs": [
+        "physical lane-change/turn logs"
+      ]
+    },
+    {
+      "id": "drive_traffic",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Run a three-vehicle route-interaction check.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.drive_traffic",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads-dir",
+        "route-json",
+        "signal-bindings",
+        "owned CARLA port"
+      ],
+      "outputs": [
+        "native traffic trajectories and response report"
+      ]
+    },
+    {
+      "id": "prepare_replay_clip",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Prepare source-window camera/actor history for native replay.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.assets.prepare_replay_clip",
+        "environment": "map"
+      },
+      "inputs": [
+        "inspect CLI for source config/log/timestamps"
+      ],
+      "outputs": [
+        "history.json and replay inputs"
+      ]
+    },
+    {
+      "id": "replay_history",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Replay observed source history with persistent actors and calibrated cameras.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.replay_dynamic_history",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "log-dir",
+        "history",
+        "map/port",
+        "appearance and physical surface inputs"
+      ],
+      "outputs": [
+        "source replay frames and causal actor records"
+      ]
+    },
+    {
+      "id": "integrate_feedback",
+      "stages": [
+        "information",
+        "static_review",
+        "dynamic_review"
+      ],
+      "description": "Turn actual outer-drive failures into graph conditions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.agent.integrate_outer_feedback",
+        "environment": "map"
+      },
+      "inputs": [
+        "graph",
+        "scene",
+        "config",
+        "failure report"
+      ],
+      "outputs": [
+        "revised graph and executable feedback conditions"
+      ]
+    },
+    {
+      "id": "shared_ground",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Build graph-selected same-level road-contact patches.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.realize_shared_road_ground",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "road meshes",
+        "conditions",
+        "workers"
+      ],
+      "outputs": [
+        "road-contact mesh and review bundle"
+      ]
+    },
+    {
+      "id": "prepare_road_patch",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Prepare changed complete road tiles using measured contact feedback.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_road_patch",
+        "environment": "map"
+      },
+      "inputs": [
+        "previous-roads",
+        "revised roads",
+        "assets",
+        "contact-review"
+      ],
+      "outputs": [
+        "local complete-cell replacement metadata"
+      ]
+    },
+    {
+      "id": "prepare_context_feedback",
+      "stages": [
+        "appearance",
+        "static_review"
+      ],
+      "description": "Resolve observed actor/canopy/land-cover support conflicts.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_context_feedback",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "source-states",
+        "canopy",
+        "landcover",
+        "Agent selection"
+      ],
+      "outputs": [
+        "context feedback conditions and report"
+      ]
+    },
+    {
+      "id": "apply_context_feedback",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Install graph-selected context and surface adjustments in a copied map.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.apply_city_context_feedback",
+        "environment": "map"
+      },
+      "inputs": [
+        "source-map",
+        "new map name",
+        "conditions"
+      ],
+      "outputs": [
+        "native context installation report"
+      ]
+    },
+    {
+      "id": "prepare_city_selection",
+      "stages": [
+        "source_selection"
+      ],
+      "description": "Materialize explicit Agent-selected candidates and bounds into normal city config using actual AV2 timestamps and measured XYZ origin.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.prepare_city_selection",
+        "environment": "map"
+      },
+      "inputs": [
+        "selection intent JSON",
+        "merged catalog",
+        "junction candidates",
+        "data root"
+      ],
+      "outputs": [
+        "city_config.json",
+        "area_selection.json"
+      ]
+    },
+    {
+      "id": "review_lane_overlap",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Measure co-located distinct-ID lane candidates and missing source heights before source ownership decisions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.review_city_lane_overlap",
+        "environment": "map"
+      },
+      "inputs": [
+        "selected AV2 catalog",
+        "AV2 data root"
+      ],
+      "outputs": [
+        "lane overlap JSON with co_located_distinct_id_candidates"
+      ]
+    },
+    {
+      "id": "realize_source_layers",
+      "stages": [
+        "coarse",
+        "compile"
+      ],
+      "description": "Realize source-supported building levels and tunnels as non-overlapping physical solids, with measured before/after route clearances.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.realize_source_layers",
+        "environment": "map"
+      },
+      "inputs": [
+        "coarse scene",
+        "city config",
+        "DEM and OSM sources"
+      ],
+      "outputs": [
+        "scene.json",
+        "layers.json",
+        "physical_review.json"
+      ]
+    },
+    {
+      "id": "diagnose_global_registration",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Propose coherent rigid transforms for reviewed shared-ID/coincident source-frame groups with whole-lane held-out measurements.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.diagnose_city_global_registration",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "pair registration diagnostic",
+        "Agent frame-group and anchor conditions"
+      ],
+      "outputs": [
+        "unapplied global registration diagnostic"
+      ]
+    },
+    {
+      "id": "propose_lane_ownership",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Measure and propose whole-lane source identity components with nearest-Area ownership and explicit topology preview.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.propose_city_lane_ownership",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "coherent registration proposal",
+        "lane-pair proposals",
+        "Agent proposal conditions"
+      ],
+      "outputs": [
+        "unapplied source ownership proposal with full geometric measurements and topology conflicts"
+      ]
+    },
+    {
+      "id": "propose_lane_chains",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Measure complete unbranched source lane chains against a longer observed source lane without changing any source.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.propose_city_lane_chains",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "coherent registration proposal",
+        "lane overlap proposals"
+      ],
+      "outputs": [
+        "unapplied complete directed chain proposals"
+      ]
+    },
+    {
+      "id": "review_source_ownership",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Realize explicit Agent source-identity and complete-chain choices, preserving source coordinates and measuring source joins.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.review_city_source_ownership",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "data root",
+        "measured whole/chain/neighbor proposals",
+        "Agent decisions"
+      ],
+      "outputs": [
+        "geometry review",
+        "assembly preview with source join measurements"
+      ]
+    },
+    {
+      "id": "extend_city_source_ownership",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Extend explicitly reviewed source identities and complete observed chains while retaining earlier ownership and source assets.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.extend_city_source_ownership",
+        "environment": "map"
+      },
+      "inputs": [
+        "city configuration",
+        "AV2 source data root",
+        "prior source review",
+        "Agent-owned explicit whole-lane/complete-chain choices"
+      ],
+      "outputs": [
+        "source review",
+        "source identity conflicts, source joins and rejected extensions"
+      ]
+    },
+    {
+      "id": "select_city_source_owners",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Jointly select exact source geometry among Agent-confirmed complete-movement alternatives to reduce source-switch steps.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.select_city_source_owners",
+        "environment": "map"
+      },
+      "inputs": [
+        "city config",
+        "source root",
+        "reviewed ownership",
+        "Agent-confirmed whole alternatives"
+      ],
+      "outputs": [
+        "source review",
+        "actual before/after joins and optimizer result"
+      ]
+    },
+    {
+      "id": "resolve_city_source_intervals",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Realize Agent-confirmed partial source identities as exact observed boundary intervals while retaining original branches and exterior portions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.resolve_city_source_intervals",
+        "environment": "map"
+      },
+      "inputs": [
+        "source SceneIR",
+        "Agent interval identity conditions",
+        "city config"
+      ],
+      "outputs": [
+        "source_scene.json",
+        "interval_review.json",
+        "rebuilt complete fusion scene.json"
+      ]
+    },
+    {
+      "id": "select_city_source_geometry",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Select exact complete Agent-reviewed AV2 source paths with unchanged canonical topology; reuse exact-owner MILP and retain original evidence.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.select_city_source_geometry",
+        "environment": "map"
+      },
+      "inputs": [
+        "source SceneIR",
+        "registered source review",
+        "Agent complete-path alternatives",
+        "city config",
+        "AV2 data root"
+      ],
+      "outputs": [
+        "scene.json",
+        "owner_review.json"
+      ]
+    },
+    {
+      "id": "review_city_source_handoffs",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Measure declared Area passenger reachability and observed-source port conflicts with witness paths and a whole-city overlay.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_source_handoffs",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused SceneIR"
+      ],
+      "outputs": [
+        "area_connectivity.json",
+        "source_handoffs.json",
+        "source_handoffs.png"
+      ]
+    },
+    {
+      "id": "review_city_interface_mouths",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Measure every conflicting original source boundary mouth and draw directed context for Agent semantic selection.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_interface_mouths",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused SceneIR",
+        "source_handoffs.json"
+      ],
+      "outputs": [
+        "mouth_measurements.json",
+        "ports images"
+      ]
+    },
+    {
+      "id": "expose_city_source_conflicts",
+      "stages": [
+        "information",
+        "structure"
+      ],
+      "description": "Expose Agent-selected source-conflict collars as inferred intervals while retaining exact outer observations and all branches.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.expose_city_source_conflicts",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused SceneIR",
+        "Agent interface decisions"
+      ],
+      "outputs": [
+        "scene.json",
+        "exposure.json"
+      ]
+    },
+    {
+      "id": "restore_city_source_continuations",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Restore explicit reviewed missing original directed coarse intervals with shared ownership and preserved permissions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.restore_city_source_continuations",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused SceneIR",
+        "Agent accepted continuation connections"
+      ],
+      "outputs": [
+        "scene.json",
+        "continuation_review.json"
+      ]
+    },
+    {
+      "id": "resolve_city_source_relations",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Realize Agent-reviewed redundant direct source relations through complete retained source paths, preserving every lane and mode.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.resolve_city_source_relations",
+        "environment": "map"
+      },
+      "inputs": [
+        "fused SceneIR",
+        "Agent relation/path conditions"
+      ],
+      "outputs": [
+        "scene.json",
+        "relation_review.json"
+      ]
+    },
+    {
+      "id": "repair_access_batch_heights",
+      "stages": [
+        "structure"
+      ],
+      "description": "Apply unchanged-XY shared-port height repair only to measured grade-only failures; preserve other rejection categories.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.repair_access_batch_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "prepared and projected access batch"
+      ],
+      "outputs": [
+        "per-region height feedback",
+        "height_feedback_batch.json"
+      ]
+    },
+    {
+      "id": "retry_access_batch",
+      "stages": [
+        "structure"
+      ],
+      "description": "Execute explicit Agent feedback options on actual rejected coupled projections, retaining old outputs and native validation dependencies.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.retry_access_batch",
+        "environment": "map"
+      },
+      "inputs": [
+        "current sampled batch",
+        "Agent region/option conditions"
+      ],
+      "outputs": [
+        "per-region constrained feedback",
+        "report.json"
+      ]
+    },
+    {
+      "id": "review_city_access_ownership",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Measure directed source ownership, original observed paths and optional multi-hop source context for explicit Agent-selected access regions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_access_ownership",
+        "environment": "map"
+      },
+      "inputs": [
+        "current source scene",
+        "sampled batch conditions",
+        "Agent region selection"
+      ],
+      "outputs": [
+        "review.json",
+        "directed source figures"
+      ]
+    },
+    {
+      "id": "realize_city_source_components",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Realize explicitly reviewed inferred components through existing observed paths, preserving original observations and all unaffected source geometry/modes.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.realize_city_source_components",
+        "environment": "map"
+      },
+      "inputs": [
+        "source scene",
+        "explicit component decisions",
+        "measured component boundaries and paths"
+      ],
+      "outputs": [
+        "scene.json",
+        "ownership_review.json"
+      ]
+    },
+    {
+      "id": "revise_city_source_access",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Apply explicit local source-access corrections using existing source constructors, exact observed splits and preserved independent branches.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.revise_city_source_access",
+        "environment": "map"
+      },
+      "inputs": [
+        "current fused scene",
+        "Agent local access decisions",
+        "reviewed source matches"
+      ],
+      "outputs": [
+        "scene.json",
+        "local_access_review.json"
+      ]
+    },
+    {
+      "id": "refresh_city_access_regions",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Regroup surviving reviewed interfaces on current source topology, preserve prior region identities and apply explicit scope feedback.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.refresh_city_access_regions",
+        "environment": "map"
+      },
+      "inputs": [
+        "current source scene",
+        "previous regions",
+        "explicit added seeds and scope conditions"
+      ],
+      "outputs": [
+        "generation_regions.json"
+      ]
+    },
+    {
+      "id": "refresh_city_graph",
+      "stages": [
+        "fusion",
+        "information"
+      ],
+      "description": "Refresh current road topology and Area dependencies while retaining actual reviewed city evidence and explicit source revision history.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.agent.refresh_city_graph",
+        "environment": "map"
+      },
+      "inputs": [
+        "current scene",
+        "previous base information graph",
+        "Agent revision conditions"
+      ],
+      "outputs": [
+        "graph.json",
+        "conditions.json",
+        "summary.json"
+      ]
+    },
+    {
+      "id": "expand_city_inferred_fans",
+      "stages": [
+        "fusion",
+        "information",
+        "structure"
+      ],
+      "description": "Realize explicitly reviewed complete inferred fan paths while preserving exact local movement identities, modes, outer connections and original source records.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.expand_city_inferred_fans",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "explicit expansion conditions"
+      ],
+      "outputs": [
+        "scene.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "review_access_obstacles",
+      "stages": [
+        "structure",
+        "compile"
+      ],
+      "description": "Compare actual rejected access candidates with original source building contacts, tags/heights and existing passage reconstruction.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_access_obstacles",
+        "environment": "map"
+      },
+      "inputs": [
+        "batch_root",
+        "actual candidate selection/application artifacts"
+      ],
+      "outputs": [
+        "review.json",
+        "obstacles_*.png",
+        "source_with_candidate_passages.json"
+      ]
+    },
+    {
+      "id": "prepare_access_dependency_candidate",
+      "stages": [
+        "structure",
+        "compile"
+      ],
+      "description": "Assemble geometrically reviewed road proposals into an explicitly unaccepted diagnostic scene for coupled ground/building dependency reconstruction.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_access_dependency_candidate",
+        "environment": "map"
+      },
+      "inputs": [
+        "batch_root",
+        "actual candidate selection/application artifacts"
+      ],
+      "outputs": [
+        "dependency_candidate_scene.json",
+        "dependency_candidate_review.json"
+      ]
+    },
+    {
+      "id": "review_clipped_junction_ports",
+      "stages": [
+        "fusion",
+        "structure",
+        "compile"
+      ],
+      "description": "Measure and render current versus original coarse candidates at source-clipped native junction ports; no automatic semantic connection.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_clipped_junction_ports",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "ports",
+        "radius",
+        "output"
+      ],
+      "outputs": [
+        "candidates.json",
+        "group_*.png"
+      ]
+    },
+    {
+      "id": "restore_clipped_source_ports",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Apply explicit source port relations, complete observed interval ownership, and inferred connector candidates while retaining original observations and branches.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.restore_clipped_source_ports",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "scene.json",
+        "source_port_review.json"
+      ]
+    },
+    {
+      "id": "partition_observed_terminals",
+      "stages": [
+        "compile"
+      ],
+      "description": "Compile explicitly reviewed unresolved AV2 terminal extents by exact existing subcurve partition; preserves observedXYZ,width,modes and original terminal position without adding a road continuation.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.partition_observed_terminals",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "scene.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "review_source_corridor_clearance",
+      "stages": [
+        "fusion",
+        "structure"
+      ],
+      "description": "Measure both wall clearances around original OSM ways independently of default inferred lane offsets.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_source_corridor_clearance",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "osm",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "review.json",
+        "corridors_*.png"
+      ]
+    },
+    {
+      "id": "fit_source_corridor_sections",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Fit explicit inferred two-direction widths and bounded source-way center offsets to actual building wall measurements.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.fit_source_corridor_sections",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "measurements",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "scene.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "propagate_source_corridor_ports",
+      "stages": [
+        "fusion"
+      ],
+      "description": "Propagate inferred corridor XY and width changes through coupled transition ports while AV2 and unrelated endpoints remain fixed.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.propagate_source_corridor_ports",
+        "environment": "map"
+      },
+      "inputs": [
+        "previous",
+        "proposal",
+        "output"
+      ],
+      "outputs": [
+        "scene.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "refresh_deformed_access_regions",
+      "stages": [
+        "fusion",
+        "information"
+      ],
+      "description": "Transport complete reviewed inference scopes through explicit source vertex correspondence.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.refresh_deformed_access_regions",
+        "environment": "map"
+      },
+      "inputs": [
+        "previous-scene",
+        "scene",
+        "regions",
+        "output"
+      ],
+      "outputs": [
+        "generation_regions.json"
+      ]
+    },
+    {
+      "id": "refresh_projected_access_heights",
+      "stages": [
+        "structure"
+      ],
+      "description": "Reuse verified unchanged actual XY objectives and reconstruct current heights with normal grade constraints.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.refresh_projected_access_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "batch-root",
+        "previous-batch",
+        "previous-selection",
+        "output"
+      ],
+      "outputs": [
+        "report.json"
+      ]
+    },
+    {
+      "id": "review_ground_edges",
+      "stages": [
+        "compile",
+        "structure"
+      ],
+      "description": "Measure terrain edges against actual neighboring source-road heights and produce local evidence plots.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_ground_edges",
+        "environment": "map"
+      },
+      "inputs": [
+        "terrain",
+        "scene",
+        "output"
+      ],
+      "outputs": [
+        "review.json",
+        "edges.png"
+      ]
+    },
+    {
+      "id": "prepare_access_clearance",
+      "stages": [
+        "information",
+        "structure"
+      ],
+      "description": "Prepare actual height-qualified building solid geometry and signed source-width clearance constraints for explicit Agent-selected access regions.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_access_clearance",
+        "environment": "map"
+      },
+      "inputs": [
+        "actual realized scene",
+        "current batch root",
+        "Agent-selected region conditions"
+      ],
+      "outputs": [
+        "condition.json per selected region",
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "review_city_canopy_candidates",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Project registered source canopy candidates into calibrated AV2 images for Agent review",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_canopy_candidates",
+        "environment": "map"
+      },
+      "inputs": [
+        "canopy-root",
+        "output"
+      ],
+      "outputs": [
+        "Source-preserving evidence and actual preparation/review report"
+      ]
+    },
+    {
+      "id": "refine_city_canopy",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Refine only visually selected crown neighborhoods and retain absolute observed top heights",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.refine_city_canopy",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "selection",
+        "output"
+      ],
+      "outputs": [
+        "Source-preserving evidence and actual preparation/review report"
+      ]
+    },
+    {
+      "id": "apply_city_canopy_conditions",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Apply explicit source crown ownership and held placement conditions without discarding evidence",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.apply_city_canopy_conditions",
+        "environment": "map"
+      },
+      "inputs": [
+        "evidence",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "Source-preserving evidence and actual preparation/review report"
+      ]
+    },
+    {
+      "id": "prepare_city_actor_layers",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Prepare per-Area removable stationary and traffic layers from registered source tracks",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_actor_layers",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "canopy-root",
+        "output",
+        "Optional --aligned-review: existing prepare_city_view_snapshots aligned/review.json; records original and actor reference epochs separately"
+      ],
+      "outputs": [
+        "Source-preserving evidence and actual preparation/review report"
+      ]
+    },
+    {
+      "id": "prepare_supported_canopy",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Project reviewed source crowns onto actual final support triangles while preserving XY and absolute top",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_supported_canopy",
+        "environment": "map"
+      },
+      "inputs": [
+        "evidence",
+        "terrain",
+        "output"
+      ],
+      "outputs": [
+        "Actual preparation or native binding report"
+      ]
+    },
+    {
+      "id": "review_city_ground",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Measure and visualize final ground and source support conflicts",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_city_ground",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "terrain",
+        "roads",
+        "output"
+      ],
+      "outputs": [
+        "Actual preparation or native binding report"
+      ]
+    },
+    {
+      "id": "separate_source_signal_entries",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Realize explicit reviewed separation of conflicting source signal entry phases",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.separate_source_signal_entries",
+        "environment": "map"
+      },
+      "inputs": [
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "Actual preparation or native binding report"
+      ]
+    },
+    {
+      "id": "configure_city_surface_materials",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Bind reviewed generated ground materials to all manifest surface tiles with exact mesh and numeric transform preservation.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.configure_city_surface_materials",
+        "environment": "map"
+      },
+      "inputs": [
+        "map",
+        "root",
+        "materials",
+        "assets",
+        "output"
+      ],
+      "outputs": [
+        "Actual preparation or native binding report",
+        "bindings.json",
+        "editor.log"
+      ]
+    },
+    {
+      "id": "extend_city_canopy",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Preserve accepted source crowns while preparing explicitly inferred outer roadside context",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.extend_city_canopy",
+        "environment": "map"
+      },
+      "inputs": [
+        "Use inventory --module --signatures for exact CLI"
+      ],
+      "outputs": [
+        "Source-preserving preparation report and runtime inputs"
+      ]
+    },
+    {
+      "id": "prepare_city_runtime_inputs",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Export independent source-time Area runtime inputs from validated routes and joint states",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_runtime_inputs",
+        "environment": "map"
+      },
+      "inputs": [
+        "Use inventory --module --signatures for exact CLI"
+      ],
+      "outputs": [
+        "Source-preserving preparation report and runtime inputs"
+      ]
+    },
+    {
+      "id": "prepare_city_review_views",
+      "stages": [
+        "appearance",
+        "compile",
+        "static_review"
+      ],
+      "description": "Prepare all declared calibrated source images and causal per-camera snapshots with exact timestamp lineage",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_city_review_views",
+        "environment": "map"
+      },
+      "inputs": [
+        "Reviewed canopy source views",
+        "Per-Area actor layers",
+        "AV2 data root"
+      ],
+      "outputs": [
+        "Original and aligned view manifests",
+        "Causal actor histories",
+        "Per-view preparation report"
+      ]
+    },
+    {
+      "id": "export_source_asset_subset",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Export selected saved source objects with explicit triangles and unchanged source vertices, transforms and materials.",
+      "entrypoint": {
+        "kind": "blender",
+        "target": "scripts/scene/export_source_asset_subset.py",
+        "environment": "blender"
+      },
+      "inputs": [
+        "native assets manifest",
+        "recorded source-object selection"
+      ],
+      "outputs": [
+        "map_assets.fbx",
+        "subset.json"
+      ]
+    },
+    {
+      "id": "restore_source_buildings",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Import diagnosed missing source-building masses into their original map and verify complete source identities and bounds.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.restore_source_buildings",
+        "environment": "map"
+      },
+      "inputs": [
+        "native map",
+        "source assets manifest",
+        "subset export"
+      ],
+      "outputs": [
+        "restoration.json",
+        "editor.log"
+      ]
+    },
+    {
+      "id": "install_city_canopy",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Install explicitly source-supported and inferred outer canopy with recorded seasonal native asset approximations.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.assets.revise_canopy_assets",
+        "environment": "map"
+      },
+      "inputs": [
+        "source map",
+        "name",
+        "canopy evidence"
+      ],
+      "outputs": [
+        "import.json",
+        "editor.log"
+      ]
+    },
+    {
+      "id": "import_source_crossings",
+      "stages": [
+        "appearance",
+        "compile"
+      ],
+      "description": "Import source-selected non-colliding RoadLine meshes; --verify-report independently reopens persisted asset, material, placement and visibility bindings without map edits.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.assets.import_crosswalks",
+        "environment": "map"
+      },
+      "inputs": [
+        "source map",
+        "name",
+        "FBX or prior native paint report"
+      ],
+      "outputs": [
+        "crosswalk_import.json",
+        "crosswalk_verification.json",
+        "editor.log"
+      ]
+    },
+    {
+      "id": "project_source_layer_profiles",
+      "stages": [
+        "structure",
+        "compile"
+      ],
+      "description": "Project an explicitly selected inferred directed chain below measured observed road support with fixed outer endpoints and bounded grade.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.project_source_layer_profiles",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "scene.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "reconstruct_source_road_heights",
+      "stages": [
+        "structure",
+        "compile"
+      ],
+      "description": "Reconstruct Agent-selected common source-road heights using current AV2 boundary profiles and fixed retained physical contacts.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.reconstruct_source_road_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "geometry",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "ground_geometry.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "encode_dense_native_heights",
+      "stages": [
+        "compile"
+      ],
+      "description": "Encode dense inferred height knots on retained native XY polynomials without cubic grade overshoot.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.encode_dense_native_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "previous-scene",
+        "scene",
+        "selection",
+        "output"
+      ],
+      "outputs": [
+        "scene.json",
+        "height_encoding.json"
+      ]
+    },
+    {
+      "id": "prepare_observed_sign_assets",
+      "stages": [
+        "appearance"
+      ],
+      "description": "Rectify the observed source sign face without generating traffic text.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_observed_sign_assets",
+        "environment": "map"
+      },
+      "inputs": [
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "assets.json",
+        "conditions.json"
+      ]
+    },
+    {
+      "id": "install_source_signs",
+      "stages": [
+        "compile"
+      ],
+      "description": "Install source-measured sign faces using rectified source panels or existing CARLA meshes.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.install_source_signs",
+        "environment": "map"
+      },
+      "inputs": [
+        "map",
+        "conditions",
+        "output"
+      ],
+      "outputs": [
+        "native_signs.json"
+      ]
+    },
+    {
+      "id": "measure_native_road_support",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Measure actual CARLA waypoints against current physical road triangles with source ownership and competing-layer diagnostics.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.measure_native_road_support",
+        "environment": "map"
+      },
+      "inputs": [
+        "xodr",
+        "mapping",
+        "roads",
+        "output",
+        "optional exact native waypoint cache"
+      ],
+      "outputs": [
+        "native_waypoints.json",
+        "native_support_samples.json",
+        "native_lookup_missing.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "align_native_physical_heights",
+      "stages": [
+        "compile"
+      ],
+      "description": "Align only native elevation profiles to source-owned reviewed physical road support, retaining ambiguous roads and reporting packed-lane transverse residual.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.align_native_physical_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "OpenDRIVE",
+        "road/source mapping",
+        "measured native physical support samples",
+        "explicit native height alignment conditions"
+      ],
+      "outputs": [
+        "roads.xodr",
+        "road_lane_ids.json",
+        "alignment.json"
+      ]
+    },
+    {
+      "id": "review_shared_road_heights",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Measure physical local floor gradients and render matched before/after height feedback.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.review_shared_road_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "previous physical roads",
+        "revised physical roads",
+        "local shared-ground review"
+      ],
+      "outputs": [
+        "review.json",
+        "local_height_feedback.png"
+      ]
+    },
+    {
+      "id": "refresh_carved_terrain",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Refresh a completed terrain XY carve only where the current source-owned road footprint differs, restoring original DEM planes when prior false road occupancy disappears.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.refresh_carved_terrain",
+        "environment": "map"
+      },
+      "inputs": [
+        "current source scene",
+        "canonical source terrain scene",
+        "current physical roads",
+        "previous carved_top.npz and road_footprint.wkt"
+      ],
+      "outputs": [
+        "carved_top.npz",
+        "road_footprint.wkt",
+        "carved_top_review.json"
+      ]
+    },
+    {
+      "id": "project_bridge_profiles",
+      "stages": [
+        "structure"
+      ],
+      "description": "Project only explicitly selected inferred bridge and approach heights over retained lower physical surfaces, preserving source planar geometry and topology.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.project_bridge_profiles",
+        "environment": "map"
+      },
+      "inputs": [
+        "source scene",
+        "retained lower physical road meshes",
+        "source_bridge_profile conditions"
+      ],
+      "outputs": [
+        "scene.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "rebase_physical_road_heights",
+      "stages": [
+        "compile"
+      ],
+      "description": "Transfer actual native elevation differences onto source-owned clipped physical road meshes, retaining physical XY/faces and reporting common-floor dependencies.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.rebase_physical_road_heights",
+        "environment": "map"
+      },
+      "inputs": [
+        "current physical roads",
+        "previous and current native surface bundles",
+        "height revision"
+      ],
+      "outputs": [
+        "road_meshes.json",
+        "review.json"
+      ]
+    },
+    {
+      "id": "measure_road_layer_clearance",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Measure exact physical vertical separation at triangle intersection vertices for declared source-owned upper/lower road layers.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.measure_road_layer_clearance",
+        "environment": "map"
+      },
+      "inputs": [
+        "physical road meshes",
+        "explicit upper/lower source selection and headroom/thickness assumptions"
+      ],
+      "outputs": [
+        "review.json"
+      ]
+    },
+    {
+      "id": "prepare_context_height_bindings",
+      "stages": [
+        "compile"
+      ],
+      "description": "Bind current source foundations, canopy and measured control supports to current physical road/terrain planes while retaining source identities and XY.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.prepare_context_height_bindings",
+        "environment": "map"
+      },
+      "inputs": [
+        "previous/current source scenes",
+        "current terrain and roads",
+        "native source assets and architecture import",
+        "source canopy",
+        "conditions"
+      ],
+      "outputs": [
+        "bindings.json",
+        "conditions.json"
+      ]
+    },
+    {
+      "id": "apply_context_height_bindings",
+      "stages": [
+        "compile"
+      ],
+      "description": "Apply explicit source-identified vertical context bindings to existing native components, retaining XY, assets/materials and observed canopy tops.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.apply_context_height_bindings",
+        "environment": "map"
+      },
+      "inputs": [
+        "owned map",
+        "passed bindings.json"
+      ],
+      "outputs": [
+        "native_context_heights.json",
+        "editor.log"
+      ]
+    },
+    {
+      "id": "verify_saved_surfaces",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Independently reopen saved declared native surface assets and verify identity, centered placement, bounds, materials, collision and supplied navigation.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.verify_saved_surfaces",
+        "environment": "map"
+      },
+      "inputs": [
+        "surface_import.json",
+        "optional explicit map override"
+      ],
+      "outputs": [
+        "surface_verification.json",
+        "editor.log"
+      ]
+    },
+    {
+      "id": "refresh_city_runtime_inputs",
+      "stages": [
+        "compile"
+      ],
+      "description": "Refresh exact retained city Area native waypoint elevations while preserving source reference positions, route branches and source-time actor inputs.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.refresh_city_runtime_inputs",
+        "environment": "map"
+      },
+      "inputs": [
+        "source scenarios",
+        "current navigation",
+        "scene/conditions references",
+        "target map"
+      ],
+      "outputs": [
+        "one current scenario/handoff per retained Area",
+        "review.json"
+      ]
+    },
+    {
+      "id": "probe_road_collision",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Compare actual owned-world blocking road collision hits to current physical triangle planes for selected source-permitted road classes; defaults to passenger roads.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.probe_road_collision",
+        "environment": "map"
+      },
+      "inputs": [
+        "scene",
+        "roads",
+        "expected-map",
+        "port",
+        "output",
+        "all-roads/spacing",
+        "classes (optional, default passenger)",
+        "source-lane-ids (optional JSON list)"
+      ],
+      "outputs": [
+        "collision_support.json"
+      ]
+    },
+    {
+      "id": "check_native_control_groups",
+      "stages": [
+        "compile"
+      ],
+      "description": "Verify current native signal identities, source-selected controller groups, stop/affected lanes and real requested states with restoration.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.scene.check_native_control_groups",
+        "environment": "map"
+      },
+      "inputs": [
+        "map",
+        "bindings",
+        "conditions",
+        "port",
+        "output"
+      ],
+      "outputs": [
+        "Actual current native measurement or installation report"
+      ]
+    },
+    {
+      "id": "inspect_native_display_bindings",
+      "stages": [
+        "compile",
+        "static_review"
+      ],
+      "description": "Read saved surface material assignments and selected control component visibility/transforms; optionally compare an unsaved stock Blueprint.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.build.inspect_native_display_bindings",
+        "environment": "map"
+      },
+      "inputs": [
+        "map",
+        "output",
+        "label-prefix",
+        "comparison-blueprint"
+      ],
+      "outputs": [
+        "display_bindings.json"
+      ]
+    },
+    {
+      "id": "index_local_sources",
+      "stages": [
+        "source_selection"
+      ],
+      "description": "Index user-provided AV2 maps and poses without network access.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.data.index_local_sources",
+        "environment": "map"
+      },
+      "inputs": [
+        "AV2 root",
+        "city",
+        "splits",
+        "optional log IDs"
+      ],
+      "outputs": [
+        "catalog JSON"
+      ]
+    },
+    {
+      "id": "run_dynamic_policy",
+      "stages": [
+        "dynamic_review"
+      ],
+      "description": "Run the user-configured installed learned driving policy with sustained demand; no model implementation is bundled.",
+      "entrypoint": {
+        "kind": "module",
+        "target": "scripts.testing.run_dynamic",
+        "environment": "map"
+      },
+      "inputs": [
+        "current workflow --run",
+        "reviewed --request with runtime_manifest, scene, routes, scenario and observation scope",
+        "new --output attempt directory",
+        "configured dynamic_policy adapter"
+      ],
+      "outputs": [
+        "dynamic_policy_results: result.json",
+        "request.json, adapter_result.json, execution.json, output.log",
+        "actual policy control and complete traffic ledger evidence"
+      ],
+      "review": "Reviewer examines actual control, sensor/navigation alignment, failures, coverage and map defects. Execution completion is not a quality pass.",
+      "limitations": [
+        "The user implements and installs the learned-policy adapter; examples are unimplemented templates.",
+        "BasicAgent or a short local traffic check cannot substitute for this learned-policy observation."
+      ]
+    }
+  ]
+}

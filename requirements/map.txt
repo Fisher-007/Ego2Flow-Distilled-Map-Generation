@@ -1,0 +1,32 @@
+# Python 3.10 map tooling; keep separate from scenario-dreamer.txt.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.0+cpu
+numpy==1.26.4
+opencv-python==4.10.0.84
+av2==0.3.6
+pyproj==3.7.1
+shapely==2.1.2
+scenariogeneration==0.16.6
+pyarrow==25.0.1
+pandas==2.3.3
+Pillow==12.3.0
+matplotlib==3.10.9
+PyYAML==6.0.3
+requests==2.34.2
+# Install the wheel shipped with the matching server runtime.
+carla==0.9.16
+sumolib==1.27.0
+networkx==3.4.2
+scipy==1.15.3
+osqp==1.1.3
+
+# Local terrain refinement for compiled observed curb/access conditions.
+trimesh==4.12.2
+# Triangle-ray intersection for calibrated observed pavement symbols.
+rtree==1.4.1
+# Large physical-road and terrain records used by whole-map feedback.
+orjson==3.13.0
+rasterio==1.4.4
+
+# OpenDRIVE XML editing.
+lxml>=4.9,<7

@@ -1,0 +1,35 @@
+--- a/Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Traffic/TrafficLightManager.cpp
++++ b/Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Traffic/TrafficLightManager.cpp
+@@ -632,6 +632,32 @@
+     }
+     RegisterLightComponentFromOpenDRIVE(TrafficLightComponent);
+     TrafficLightComponent->InitializeSign(GetMap().get());
++  }
++
++  // Source-positioned displays retain their native identities and controllers.
++  // Opt in to the same OpenDRIVE lane triggers used by automatically spawned lights.
++  for (TActorIterator<ATrafficLightBase> It(GetWorld()); It; ++It)
++  {
++    ATrafficLightBase* Light = *It;
++    if (!Light->ActorHasTag(TEXT("MAP_UseOpenDriveTriggers")))
++      continue;
++    UTrafficLightComponent* Component = Light->GetTrafficLightComponent();
++    RegisterLightComponentGenerated(Component);
++    if (Component->GetEffectTriggerVolume().Num() == 0)
++    {
++      // Use source-validity lane boxes for the saved signal display.
++      // Disable overlap events on the stock display trigger.
++      TArray<UBoxComponent*> LegacyBoxes;
++      Light->GetComponents(LegacyBoxes);
++      for (UBoxComponent* Box : LegacyBoxes)
++      {
++        Box->SetGenerateOverlapEvents(false);
++        Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
++      }
++      Component->InitializeSign(GetMap().get());
++      UE_LOG(LogCarla, Log, TEXT("MAP initialized saved signal %s with %d OpenDRIVE effect triggers"),
++          *Component->GetSignId(), Component->GetEffectTriggerVolume().Num());
++    }
+   }
+ }
+ 

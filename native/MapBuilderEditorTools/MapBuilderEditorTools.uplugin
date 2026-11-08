@@ -1,0 +1,17 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "MAP Editor Tools",
+  "Description": "Thin wrappers around native editor asset operations used by reproducible city construction.",
+  "Category": "Editor",
+  "CanContainContent": false,
+  "EnabledByDefault": true,
+  "Modules": [
+    {
+      "Name": "MapBuilderEditorTools",
+      "Type": "Editor",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

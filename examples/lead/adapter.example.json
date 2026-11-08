@@ -1,0 +1,6 @@
+{
+  "name": "LEAD",
+  "command": ["/path/to/lead-env/bin/python", "/path/to/user-adapters/learned_policy.py"],
+  "cwd": "/path/to/user-adapters",
+  "config": "/path/to/lead-model.local.json"
+}

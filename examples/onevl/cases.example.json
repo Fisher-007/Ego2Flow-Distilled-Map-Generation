@@ -1,0 +1,12 @@
+{
+  "description": "Configure the source log, anchor timestamp, and camera history for each case.",
+  "cases": [
+    {
+      "case_id": "example_anchor",
+      "log_id": "your-source-log-id",
+      "split": "val",
+      "timestamp_ns": null,
+      "camera_history_config": "/path/to/causal-camera-history.json"
+    }
+  ]
+}

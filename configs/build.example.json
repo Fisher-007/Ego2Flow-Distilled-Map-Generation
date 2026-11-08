@@ -1,0 +1,55 @@
+{
+  "map_name": "ExampleMap",
+  "output": "../runs/ExampleMap",
+  "agent": {
+    "base_url": "https://your-api.example/v1",
+    "api_key_env": "MAP_AGENT_API_KEY",
+    "model": "your-vision-and-reasoning-model",
+    "response_mode": "json_schema",
+    "timeout_seconds": 300,
+    "parameters": {},
+    "roles": {
+      "static_review": {},
+      "dynamic_review": {}
+    }
+  },
+  "input": {
+    "city": "ATX",
+    "bbox_city_xy": null,
+    "area_count": 1,
+    "splits": ["train", "val"],
+    "log_ids": [],
+    "data_root": "/path/to/data",
+    "city_config": null,
+    "catalog": null,
+    "osm": null,
+    "terrain_dem": null,
+    "allow_download": true
+  },
+  "software": {
+    "map_python": null,
+    "scenario_dreamer_python": "/path/to/scenario-env/bin/python",
+    "scenario_dreamer_source": "/path/to/scenario-dreamer",
+    "scenario_dreamer_data": "/path/to/scenario-dreamer-data",
+    "scenario_dreamer_checkpoint": "/path/to/scenario-dreamer-data/checkpoints/scenario_dreamer_ldm_large_waymo/last.ckpt",
+    "scenario_dreamer_autoencoder": "/path/to/scenario-dreamer-data/checkpoints/scenario_dreamer_autoencoder_waymo/last.ckpt",
+    "cosmos_python": "/path/to/cosmos-env/bin/python",
+    "cosmos_model": "/path/to/cosmos-model",
+    "cosmos_guardrail_root": "/path/to/cosmos-guardrail-models",
+    "blender": "/path/to/blender/blender",
+    "netconvert": "/path/to/sumo/bin/netconvert",
+    "sumo_home": "/path/to/sumo",
+    "ffmpeg": "/usr/bin/ffmpeg",
+    "carla_root": "/path/to/dedicated-carla-0.9.16",
+    "ue_root": "/path/to/UnrealEngine_4.26"
+  },
+  "resources": {
+    "gpu": 0,
+    "cpus": "0-3",
+    "port": 25000,
+    "threads": 2
+  },
+  "environment": {},
+  "dynamic_policy": null,
+  "instructions": "Preserve supported lane connectivity, traffic controls, access openings and decision-relevant visibility throughout the declared region."
+}
