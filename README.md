@@ -1,5 +1,6 @@
 # Distilled Map Generation
 
+![Figure](./assets/Figure2.png)
 ## Overview
 
 Distilled Map Generation constructs CARLA maps from Argoverse 2 road geometry, images, LiDAR, and poses, together with OpenStreetMap and terrain data. An information graph connects source observations to road structure, traffic controls, and visual assets. Separate construction, static review, and dynamic review agents refine the map through feedback.
